@@ -40,12 +40,12 @@ remove_book() {
     NAME=$1
     LIST=$2
 
-    if ! [ -e $DIR$NAME ]; then
+    if ! [ -e "$DIR$NAME" ]; then
         echo "Linkbook doesn't exist!"
     else
         read -p "Are you sure? " ans
         if [ $ans = 'y' ] || [ $ans = '' ]; then
-            rm $DIR$NAME
+            rm "$DIR$NAME"
         else
             break
         fi
