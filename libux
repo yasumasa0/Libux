@@ -7,32 +7,30 @@ add_book() {
     BOOK=$1
     NAME=$2
     LIST=$3
-    
     if ! [ -e "$BOOK" ]; then
         echo "Incorrect path. Book doesn't exist!"
         return -1
     fi
 
-    if [ -e "$DIR$NAME" ]; then
+    if [ -e "$DIR$LIST$NAME" ]; then
         echo "Linkbook already exist!"
         return -1
     fi
-
-    if [ -n "$LIST" ]; then
-        read -p "List doesn't exist, do you want to create it? " ans
-        if [ $ans = 'y' ] || [ $ans = '' ]; then
-            $LIST = ""
-            ln $BOOK "$DIR$NAME"
-            echo "Link isn't created, link established!"
-        else
-            mkdir "$DIR$LIST"
-            ln $BOOK "$DIR$LIST/$NAME"
-            echo "List created, link established!"
-        fi
-    else
-        echo $2
+    
+    if [ -z "$LIST" ]; then
         ln "$BOOK" "$DIR$NAME"
-        echo "Link established!"
+        echo "Link created!"
+    elif
+        [ -d "$DIR$LIST" ]; then
+        ln "$BOOK" "$DIR$LIST/$NAME"
+    else
+        read -p "Do you want to create this list? " ans
+        if [ "$ans" = "y" ] || [ "$ans" = "" ]; then
+            mkdir "$DIR$LIST"
+            ln "$BOOK" "$DIR$LIST/$NAME"
+        else
+            "OK... Nothing is done."
+        fi
     fi
 }
 
@@ -63,15 +61,15 @@ list_books() {
 
 open_book() {
     NAME=$1
+    LIST=$2
     if [ -n "$2" ]; then
         LIST="$2/"
     else
         LIST=""
     fi
 
-    echo $DIR$LIST$NAME
     if [ -e "$DIR$LIST$NAME" ]; then
-        $DEFAULT_READER "$DIR$LIST$NAME"
+        $DEFAULT_READER "$DIR$LIST$NAME" 2> /dev/null &
     else
         echo "Linkbook doesn't exist"
     fi
@@ -79,7 +77,14 @@ open_book() {
 
 case $1 in
     "add")
-        add_book "$2" $3 
+        LIST=$(echo $3 | awk -F: '{print $1}')
+        NAME=$(echo $3 | awk -F: '{print $2}')
+        if [ -z "$NAME" ]; then
+            NAME=$LIST
+            LIST=""
+        fi
+        echo $NAME $LIST
+        add_book "$2" "$NAME" "$LIST"
         ;;
     "rm")
         remove_book "$2"
@@ -88,7 +93,14 @@ case $1 in
         list_books $2
         ;;
     "read")
-        open_book "$2"
+        LIST=$(echo $2 | awk -F: '{print $1}')
+        NAME=$(echo $2 | awk -F: '{print $2}')
+        if [ -z "$NAME" ]; then
+            NAME=$LIST
+            LIST=""
+        fi
+
+        open_book "$NAME" "$LIST"
         ;;
     *)
         echo "Invalid arguments"
