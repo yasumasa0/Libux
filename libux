@@ -1,7 +1,16 @@
 #!/bin/sh
 
 DIR="/home/kristo/.books/"
-DEFAULT_READER=zathura
+DEFAULT_READER=sioyek
+
+add_list() {
+    LIST=$1
+    if [ -e "$DIR$LIST" ]; then
+        echo "List already exist!"
+    else
+        mkdir "$DIR$LIST"
+    fi
+}
 
 add_book() {
     BOOK=$1
@@ -69,9 +78,20 @@ open_book() {
     fi
 
     if [ -e "$DIR$LIST$NAME" ]; then
-        $DEFAULT_READER "$DIR$LIST$NAME" 2> /dev/null &
+        $DEFAULT_READER "$DIR$LIST$NAME" > /dev/null &
     else
         echo "Linkbook doesn't exist"
+    fi
+}
+
+move_book() {
+    NAME=$1
+    LIST=$2
+    TO=$3
+    if [ -e "$DIR$LIST/$NAME" ] && [ -d "$DIR$TO" ]; then
+        mv "$DIR$LIST/$NAME" "$DIR$TO/$NAME"
+    else
+        echo "Link doesn't exist"
     fi
 }
 
@@ -83,7 +103,6 @@ case $1 in
             NAME=$LIST
             LIST=""
         fi
-        echo $NAME $LIST
         add_book "$2" "$NAME" "$LIST"
         ;;
     "rm")
@@ -101,6 +120,18 @@ case $1 in
         fi
 
         open_book "$NAME" "$LIST"
+        ;;
+    "move")
+        LIST=$(echo $2 | awk -F: '{print $1}')
+        NAME=$(echo $2 | awk -F: '{print $2}')
+        if [ -z "$NAME" ]; then
+            NAME=$LIST
+            LIST=""
+        fi
+        move_book "$NAME" "$LIST" $3
+        ;;
+    "make")
+        add_list $2
         ;;
     *)
         echo "Invalid arguments"
